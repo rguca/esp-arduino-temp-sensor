@@ -1,0 +1,58 @@
+#include "CustomMqttClient.h"
+
+CustomMqttClient::CustomMqttClient() : MqttClient(wifi_client) {
+}
+
+void CustomMqttClient::setup(String device_name, String host, String user, String password) {
+    this->device.ids = String(ESP.getChipId(), HEX).c_str();
+    this->device.name = strdup(device_name.c_str());
+    this->device.mf = "espressif";
+    
+    this->setUsernamePassword(user, password);
+    if (this->connect(host.c_str())) {
+        LOG("MQTT connected to %s", host.c_str())
+        this->onConnectCallback();
+    } else {
+        LOG("MQTT connection to %s failed! Error code = %d", host.c_str(), this->connectError());
+    }
+}
+
+void CustomMqttClient::sendTemperature(String name, float value) {
+    StaticJsonDocument<512> doc;
+    String url_device_name = String(this->device.name);
+    url_device_name.toLowerCase();
+    url_device_name.replace(' ', '-');
+    String url_name = String(name.c_str());
+    url_name.toLowerCase();
+    url_name.replace(' ', '-');
+    String topic = String(url_device_name + "/sensor/" + url_name + "/state");
+
+    doc["dev_cla"] = "temperature";
+    doc["unit_of_meas"] = "°C";
+    doc["stat_cla"] = "measurement";
+    doc["name"] = name;
+    doc["stat_t"] = topic;
+    doc["uniq_id"] = String(url_device_name + "-" + url_name);
+
+    JsonObject dev = doc.createNestedObject("dev");
+    dev["ids"] = this->device.ids;
+    dev["name"] = this->device.name;
+    dev["sw"] = this->device.sw; // "arduino Dec 19 2023, 16:02:13";
+    dev["mdl"] = this->device.mdl; // "d1_mini";
+    dev["mf"] = this->device.mf;
+    dev["sa"] = this->device.sa;
+
+    this->beginMessage(String("homeassistant/sensor/" + url_device_name + "/" + url_name + "/config"), true);
+    serializeJson(doc, *this);
+    this->endMessage();
+
+    this->beginMessage(topic, true);
+    this->print(value);
+    this->endMessage();
+
+    LOG("Temperature %s sent: %f", name.c_str(), value);
+}
+
+void CustomMqttClient::setOnConnect(std::function<void()> callback) {
+    this->onConnectCallback = callback;
+}
