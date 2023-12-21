@@ -4,7 +4,7 @@ CustomMqttClient::CustomMqttClient() : MqttClient(wifi_client) {
 }
 
 void CustomMqttClient::setup(String device_name, String host, String user, String password) {
-    this->device.ids = String(ESP.getChipId(), HEX).c_str();
+    this->device.ids = strdup(String(ESP.getChipId(), HEX).c_str());
     this->device.name = strdup(device_name.c_str());
     this->device.mf = "espressif";
     
@@ -37,10 +37,10 @@ void CustomMqttClient::sendTemperature(String name, float value) {
     JsonObject dev = doc.createNestedObject("dev");
     dev["ids"] = this->device.ids;
     dev["name"] = this->device.name;
-    dev["sw"] = this->device.sw; // "arduino Dec 19 2023, 16:02:13";
-    dev["mdl"] = this->device.mdl; // "d1_mini";
-    dev["mf"] = this->device.mf;
-    dev["sa"] = this->device.sa;
+    if (this->device.sw) dev["sw"] = this->device.sw; // "arduino Dec 19 2023, 16:02:13";
+    if (this->device.mdl) dev["mdl"] = this->device.mdl; // "d1_mini";
+    if (this->device.mf) dev["mf"] = this->device.mf;
+    if (this->device.sa) dev["sa"] = this->device.sa;
 
     this->beginMessage(String("homeassistant/sensor/" + url_device_name + "/" + url_name + "/config"), true);
     serializeJson(doc, *this);
