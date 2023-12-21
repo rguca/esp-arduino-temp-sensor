@@ -1,8 +1,11 @@
 #include "main.h"
 #include "log/log.h"
+#include "dallas/OneWireTemperatureSensor.h"
 #include "preferences/CustomPreferences.h"
 #include "wifi/CustomWifiManager.h"
 #include "mqtt/CustomMqttClient.h"
+
+OneWireTemperatureSensor temperature_sensor(D3, 10);
 
 CustomPreferences preferences;
 
@@ -13,6 +16,8 @@ void setup() {
   #ifdef ENABLE_LOG
     Serial.begin(115200);
   #endif
+
+  temperature_sensor.requestTemperature();
 
   pinMode(D0, INPUT_PULLDOWN_16); 
   bool is_config_enabled = digitalRead(D0) == 0;
@@ -40,7 +45,7 @@ void saveParameters() {
 }
 
 void sendState() {
-  mqtt_client.sendTemperature("T1", 22.0);
+  mqtt_client.sendTemperature("T1", temperature_sensor.getValue());
 }
 
 void loop() {
