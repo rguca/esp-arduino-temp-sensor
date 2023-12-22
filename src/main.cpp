@@ -9,6 +9,7 @@ CustomWifiManager wifi_manager;
 CustomMqttClient mqtt_client;
 
 bool is_config_enabled;
+float battery_voltage;
 
 void setup() {
   #ifdef ENABLE_LOG
@@ -28,6 +29,8 @@ void setup() {
     deepSleep();
     return;
   }
+
+  battery_voltage = analogRead(A0) / 1024.0 * 5.66; // Needs to be measured early to not drop it too much
 
   wifi_manager.setEnableConfigPortal(is_config_enabled);
   wifi_manager.setOnSave(saveParameters);
@@ -51,6 +54,8 @@ void saveParameters() {
 void sendState() {
   mqtt_client.sendTemperature("T1", temperature_sensor.getLastValue());
   mqtt_client.sendTemperature("T2", temperature_sensor2.getLastValue());
+  mqtt_client.sendVoltage("Batterie", battery_voltage);
+  mqtt_client.sendDuration("Laufzeit", millis() / 1000.0);
 }
 
 void loop() {

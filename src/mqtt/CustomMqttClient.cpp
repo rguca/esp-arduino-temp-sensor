@@ -19,6 +19,35 @@ void CustomMqttClient::setup(String device_name, String host, String user, Strin
 
 void CustomMqttClient::sendTemperature(String name, float value) {
     StaticJsonDocument<512> doc;
+    doc["dev_cla"] = "temperature";
+    doc["unit_of_meas"] = "°C";
+
+    this->sendMessage(name, value, &doc);
+
+    LOG("Temperature %s sent: %f", name.c_str(), value);
+}
+
+void CustomMqttClient::sendVoltage(String name, float value) {
+    StaticJsonDocument<512> doc;
+    doc["dev_cla"] = "voltage";
+    doc["unit_of_meas"] = "V";
+
+    this->sendMessage(name, value, &doc);
+
+    LOG("Voltage %s sent: %f", name.c_str(), value);
+}
+
+void CustomMqttClient::sendDuration(String name, float value) {
+    StaticJsonDocument<512> doc;
+    doc["dev_cla"] = "duration";
+    doc["unit_of_meas"] = "s";
+
+    this->sendMessage(name, value, &doc);
+
+    LOG("Duration %s sent: %f", name.c_str(), value);
+}
+
+void CustomMqttClient::sendMessage(String name, float value, JsonDocument* doc) {
     String url_device_name = String(this->device.name);
     url_device_name.toLowerCase();
     url_device_name.replace(' ', '-');
@@ -27,14 +56,12 @@ void CustomMqttClient::sendTemperature(String name, float value) {
     url_name.replace(' ', '-');
     String topic = String(url_device_name + "/sensor/" + url_name + "/state");
 
-    doc["dev_cla"] = "temperature";
-    doc["unit_of_meas"] = "°C";
-    doc["stat_cla"] = "measurement";
-    doc["name"] = name;
-    doc["stat_t"] = topic;
-    doc["uniq_id"] = String(url_device_name + "-" + url_name);
+    (*doc)["stat_cla"] = "measurement";
+    (*doc)["name"] = name;
+    (*doc)["stat_t"] = topic;
+    (*doc)["uniq_id"] = String(url_device_name + "-" + url_name);
 
-    JsonObject dev = doc.createNestedObject("dev");
+    JsonObject dev = doc->createNestedObject("dev");
     dev["ids"] = this->device.ids;
     dev["name"] = this->device.name;
     if (this->device.sw) dev["sw"] = this->device.sw; // "arduino Dec 19 2023, 16:02:13";
@@ -43,14 +70,12 @@ void CustomMqttClient::sendTemperature(String name, float value) {
     if (this->device.sa) dev["sa"] = this->device.sa;
 
     this->beginMessage(String("homeassistant/sensor/" + url_device_name + "/" + url_name + "/config"), true);
-    serializeJson(doc, *this);
+    serializeJson(*doc, *this);
     this->endMessage();
 
     this->beginMessage(topic, true);
     this->print(value);
     this->endMessage();
-
-    LOG("Temperature %s sent: %f", name.c_str(), value);
 }
 
 void CustomMqttClient::setOnConnect(std::function<void()> callback) {

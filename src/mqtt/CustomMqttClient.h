@@ -11,6 +11,8 @@ public:
     void setup(String device_name, String host, String user, String password);
 
     void sendTemperature(String name, float value);
+    void sendVoltage(String name, float value);
+    void sendDuration(String name, float value);
 
 protected:
     struct Device {
@@ -24,4 +26,6 @@ protected:
 
     WiFiClient wifi_client;
     std::function<void()> onConnectCallback;
+
+    void sendMessage(String name, float value, JsonDocument* doc);
 };
