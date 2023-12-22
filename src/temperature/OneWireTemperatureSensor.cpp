@@ -2,7 +2,8 @@
 
 OneWireTemperatureSensor::OneWireTemperatureSensor(uint8_t pin, uint8_t resolution) : 
     pin(pin),
-    resolution(resolution)
+    resolution(resolution),
+    last_value(NAN)
 {
 }
 
@@ -77,23 +78,32 @@ bool OneWireTemperatureSensor::requestTemperature() {
     if (this->one_wire == NULL) {
         this->setup();
     }
+    if (this->is_conversion_in_progress) {
+        return true;
+    }
     if (!this->one_wire->reset()) {
         LOG("No presence pulse detected. Can't request temperature")
         return false;
     }
     this->one_wire->select(this->address);
     this->one_wire->write(0x44); // Start conversion
-    this->is_temperature_requested = true;
+    this->is_conversion_in_progress = true;
+    return true;
+}
+
+bool OneWireTemperatureSensor::waitForResult() {
+    int start = millis();
+    while (this->one_wire->read() == 0) {
+        if (millis() - start >= MAX_WAIT_TIME) return false;
+        delay(10);
+    }
+    this->is_conversion_in_progress = false;
     return true;
 }
 
 float OneWireTemperatureSensor::getValue() {
-    if (!this->is_temperature_requested) {
-        if (!this->requestTemperature()) return NAN;
-    }
-    while (this->one_wire->read() == 0) {
-        delay(10);
-    }
+    if (!this->requestTemperature()) return NAN;
+    if (!this->waitForResult()) return NAN;
 
     uint8_t* data = this->readScratchpad();
     if (data == NULL) return NAN;
@@ -114,11 +124,11 @@ float OneWireTemperatureSensor::getValue() {
         // default is 12 bit resolution, 750 ms conversion time, 0.0625C
     }
     delete data;
-    return (float)raw / 16.0;
+    return this->last_value = (float)raw / 16.0;
 }
 
-OneWireTemperatureSensor::~OneWireTemperatureSensor() {
-    delete this->one_wire;
+float OneWireTemperatureSensor::getLastValue() {
+    return this->last_value;
 }
 
 uint8_t* OneWireTemperatureSensor::readScratchpad() {
@@ -152,4 +162,8 @@ bool OneWireTemperatureSensor::writeScratchpad(uint8_t th, uint8_t tl, uint8_t c
     this->one_wire->write(tl);
     this->one_wire->write(cfg);
     return true;
+}
+
+OneWireTemperatureSensor::~OneWireTemperatureSensor() {
+    delete this->one_wire;
 }
