@@ -1,3 +1,4 @@
+#define TAG "MQTT"
 #include "CustomMqttClient.h"
 
 CustomMqttClient::CustomMqttClient() : MqttClient(wifi_client) {
@@ -10,72 +11,76 @@ void CustomMqttClient::setup(String device_name, String host, String user, Strin
     
     this->setUsernamePassword(user, password);
     if (this->connect(host.c_str())) {
-        LOG("MQTT connected to %s", host.c_str())
+        LOG("Connected to %s", host.c_str())
         this->onConnectCallback();
     } else {
-        LOG("MQTT connection to %s failed! Error code = %d", host.c_str(), this->connectError());
+        LOGE("Connection to %s failed! Error code = %d", host.c_str(), this->connectError())
     }
 }
 
-void CustomMqttClient::sendTemperature(String name, float value) {
+void CustomMqttClient::registerTemperature(const char* name) {
     StaticJsonDocument<512> doc;
     doc["dev_cla"] = "temperature";
     doc["unit_of_meas"] = "°C";
-
-    this->sendMessage(name, value, &doc);
-
-    LOG("Temperature %s sent: %f", name.c_str(), value);
+    doc["suggested_display_precision"] = 1;
+    this->registerMeasurement(name, &doc);
+    LOG("Temperature %s registered", name)
 }
 
-void CustomMqttClient::sendVoltage(String name, float value) {
+void CustomMqttClient::registerVoltage(const char* name) {
     StaticJsonDocument<512> doc;
     doc["dev_cla"] = "voltage";
     doc["unit_of_meas"] = "V";
-
-    this->sendMessage(name, value, &doc);
-
-    LOG("Voltage %s sent: %f", name.c_str(), value);
+    this->registerMeasurement(name, &doc);
+    LOG("Voltage %s registered", name)
 }
 
-void CustomMqttClient::sendDuration(String name, float value) {
+void CustomMqttClient::registerDuration(const char* name) {
     StaticJsonDocument<512> doc;
     doc["dev_cla"] = "duration";
     doc["unit_of_meas"] = "s";
-
-    this->sendMessage(name, value, &doc);
-
-    LOG("Duration %s sent: %f", name.c_str(), value);
+    this->registerMeasurement(name, &doc);
+    LOG("Duration %s registered", name)
 }
 
-void CustomMqttClient::sendMessage(String name, float value, JsonDocument* doc) {
-    String url_device_name = String(this->device.name);
-    url_device_name.toLowerCase();
-    url_device_name.replace(' ', '-');
-    String url_name = String(name.c_str());
-    url_name.toLowerCase();
-    url_name.replace(' ', '-');
-    String topic = String(url_device_name + "/sensor/" + url_name + "/state");
+void CustomMqttClient::registerMeasurement(const char* name, JsonDocument* doc) {
+    String device_name = this->convertName(this->device.name);
+    String name_ = this->convertName(name);
+    String topic = String(device_name + "/sensor/" + name_ + "/state");
 
     (*doc)["stat_cla"] = "measurement";
     (*doc)["name"] = name;
     (*doc)["stat_t"] = topic;
-    (*doc)["uniq_id"] = String(url_device_name + "-" + url_name);
+    (*doc)["uniq_id"] = String(device_name + "-" + name_);
 
     JsonObject dev = doc->createNestedObject("dev");
     dev["ids"] = this->device.ids;
     dev["name"] = this->device.name;
-    if (this->device.sw) dev["sw"] = this->device.sw; // "arduino Dec 19 2023, 16:02:13";
-    if (this->device.mdl) dev["mdl"] = this->device.mdl; // "d1_mini";
+    if (this->device.sw) dev["sw"] = this->device.sw;
+    if (this->device.mdl) dev["mdl"] = this->device.mdl;
     if (this->device.mf) dev["mf"] = this->device.mf;
     if (this->device.sa) dev["sa"] = this->device.sa;
 
-    this->beginMessage(String("homeassistant/sensor/" + url_device_name + "/" + url_name + "/config"), true);
+    this->beginMessage(String("homeassistant/sensor/" + device_name + "/" + name_ + "/config"), true);
     serializeJson(*doc, *this);
     this->endMessage();
+}
 
+void CustomMqttClient::sendValue(const char* name, float value) {
+    String device_name = this->convertName(this->device.name);
+    String name_ = this->convertName(name);
+    String topic = String(device_name + "/sensor/" + name_ + "/state");
     this->beginMessage(topic, true);
     this->print(value);
     this->endMessage();
+    LOG("Published %s: %f", name, value)
+}
+
+String CustomMqttClient::convertName(const char* name) {
+    String name_ = String(name);
+    name_.toLowerCase();
+    name_.replace(' ', '-');
+    return name_;
 }
 
 void CustomMqttClient::setOnConnect(std::function<void()> callback) {

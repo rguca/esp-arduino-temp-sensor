@@ -10,9 +10,10 @@ public:
     void setOnConnect(std::function<void()> callback);
     void setup(String device_name, String host, String user, String password);
 
-    void sendTemperature(String name, float value);
-    void sendVoltage(String name, float value);
-    void sendDuration(String name, float value);
+    void registerTemperature(const char* name);
+    void registerVoltage(const char* name);
+    void registerDuration(const char* name);
+    void sendValue(const char* name, float value);
 
 protected:
     struct Device {
@@ -27,5 +28,6 @@ protected:
     WiFiClient wifi_client;
     std::function<void()> onConnectCallback;
 
-    void sendMessage(String name, float value, JsonDocument* doc);
+    void registerMeasurement(const char* name, JsonDocument* doc);
+    String convertName(const char* name);
 };

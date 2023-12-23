@@ -1,3 +1,4 @@
+#define TAG "OneWire"
 #include "OneWireTemperatureSensor.h"
 
 OneWireTemperatureSensor::OneWireTemperatureSensor(uint8_t pin, uint8_t resolution) : 
@@ -12,32 +13,34 @@ void OneWireTemperatureSensor::setup() {
 
     if (!this->one_wire->search(this->address)) {
         this->one_wire->reset_search();
-        LOG("No OneWire temperature sensor found on pin: %d", pin)
+        LOGE("No temperature sensor found on pin: %d", pin)
         return;
     }
-    LOG("OneWire temperature sensor found: 0x%02X%02X%02X%02X%02X%02X%02X%02X", (int) this->address[0], (int) this->address[1], (int) this->address[2], 
+    LOG("Temperature sensor found: 0x%02X%02X%02X%02X%02X%02X%02X%02X", (int) this->address[0], (int) this->address[1], (int) this->address[2], 
         (int) this->address[3], (int) this->address[4], (int) this->address[5], (int) this->address[6], (int) this->address[7])
     if (OneWire::crc8(this->address, 7) != this->address[7]) {
-        LOG("Address CRC invalid")
+        LOGE("Address CRC invalid")
         return;
     }
 
-    const char* type;
-    switch (this->address[0]) {
-    case 0x10:
-      type = "DS18S20";
-      break;
-    case 0x28:
-      type = "DS18B20";
-      break;
-    case 0x22:
-      type = "DS1822";
-      break;
-    default:
-      type = "unknown";
-      return;
-    }
-    LOG("Type: %s", type)
+    #ifdef LOG_INFO
+        const char* type;
+        switch (this->address[0]) {
+        case 0x10:
+        type = "DS18S20";
+        break;
+        case 0x28:
+        type = "DS18B20";
+        break;
+        case 0x22:
+        type = "DS1822";
+        break;
+        default:
+        type = "unknown";
+        return;
+        }
+        LOG("Type: %s", type)
+    #endif
 
     if (this->resolution) {
         this->setResolution(this->resolution);
@@ -82,7 +85,7 @@ bool OneWireTemperatureSensor::requestTemperature() {
         return true;
     }
     if (!this->one_wire->reset()) {
-        LOG("No presence pulse detected. Can't request temperature")
+        LOGE("No presence pulse detected. Can't request temperature")
         return false;
     }
     this->one_wire->select(this->address);
@@ -133,7 +136,7 @@ float OneWireTemperatureSensor::getLastValue() {
 
 uint8_t* OneWireTemperatureSensor::readScratchpad() {
     if (!this->one_wire->reset()) {
-        LOG("No presence pulse detected. Can't read Scratchpad")
+        LOGE("No presence pulse detected. Can't read Scratchpad")
         return NULL;
     }
     this->one_wire->select(this->address);
@@ -144,7 +147,7 @@ uint8_t* OneWireTemperatureSensor::readScratchpad() {
         data[i] = this->one_wire->read();
     }
     if (OneWire::crc8(data, 8) != data[8]) {
-        LOG("Scratchpad CRC invalid")
+        LOGE("Scratchpad CRC invalid")
         delete data;
         return NULL;
     }
@@ -153,7 +156,7 @@ uint8_t* OneWireTemperatureSensor::readScratchpad() {
 
 bool OneWireTemperatureSensor::writeScratchpad(uint8_t th, uint8_t tl, uint8_t cfg) {
     if (!this->one_wire->reset()) {
-        LOG("No presence pulse detected. Can't write Scratchpad")
+        LOGE("No presence pulse detected. Can't write Scratchpad")
         return false;
     }
     this->one_wire->select(this->address);

@@ -15,7 +15,7 @@ public:
     float getLastValue();
 
 protected:
-    const int MAX_WAIT_TIME = 1000;
+    const unsigned int MAX_WAIT_TIME = 1000;
 
     uint8_t pin;
     uint8_t resolution;
