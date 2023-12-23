@@ -32,23 +32,19 @@ void setup() {
 
 	battery_voltage = analogRead(A0) / 1024.0 * 5.66; // Needs to be measured early to not drop it too much
 
-	wifi_manager.setEnableConfigPortal(is_config_enabled);
-	wifi_manager.setOnSave(saveParameters);
+	if (is_config_enabled) {
+		Parameters* parameters = preferences.getParameters();
+		wifi_manager.addParameter(&parameters->mqtt_host);
+		wifi_manager.addParameter(&parameters->mqtt_user);
+		wifi_manager.addParameter(&parameters->mqtt_password);
+		wifi_manager.setOnSave([](void) {preferences.saveParameters();});
+		wifi_manager.setEnableConfigPortal(is_config_enabled);
+	}
 	wifi_manager.setup("Temp Sensor", "keller123");
 
 	MqttSettings settings = preferences.getMqttSettings();
 	mqtt_client.setOnConnect(sendState);
-	mqtt_client.setup("Temp Sensor", settings.host, settings.user, settings.password);
-}
-
-void saveParameters() {
-	MqttSettings settings {
-		wifi_manager.parameters.mqtt_host.getValue(),
-		wifi_manager.parameters.mqtt_user.getValue(),
-		wifi_manager.parameters.mqtt_password.getValue()
-	};
-	preferences.setMqttSettings(settings);
-	LOG("Preferences saved");
+	mqtt_client.setup("Temp Sensor", &settings);
 }
 
 void sendState() {

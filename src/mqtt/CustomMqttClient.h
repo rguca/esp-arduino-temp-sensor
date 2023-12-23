@@ -1,14 +1,21 @@
+#pragma once
 #include <WiFiClient.h>
 #include <ArduinoMqttClient.h>
 #include <ArduinoJson.h>
 #include "log/log.h"
+
+struct MqttSettings  {
+    const char* host;
+    const char* user;
+    const char* password;
+};
 
 class CustomMqttClient : public MqttClient {
 public:
     CustomMqttClient();
 
     void setOnConnect(std::function<void()> callback);
-    void setup(String device_name, String host, String user, String password);
+    void setup(const char* device_name, MqttSettings* settings);
 
     void registerTemperature(const char* name);
     void registerVoltage(const char* name);

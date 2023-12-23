@@ -5,7 +5,7 @@
 #endif
 
 #ifdef ENABLE_LOG
-	#ifdef LOG_INFO
+	#ifdef INFO_LOG
 		#define LOG(...) \
 			Serial.print(millis());\
 			PRINT_TAG()\

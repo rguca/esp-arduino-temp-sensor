@@ -23,7 +23,7 @@ void OneWireTemperatureSensor::setup() {
         return;
     }
 
-    #ifdef LOG_INFO
+    #ifdef INFO_LOG
         const char* type;
         switch (this->address[0]) {
         case 0x10:

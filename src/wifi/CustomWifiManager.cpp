@@ -1,29 +1,21 @@
 #define TAG "WiFi"
 #include "CustomWifiManager.h"
 
-CustomWifiManager::CustomWifiManager() :
-	parameters {
-		{"mqtt_host", "MQTT host", "192.168.1.5", 20},
-		{"mqtt_user", "MQTT user", "user", 20},
-		{"mqtt_password", "MQTT password", "", 20}
-	}
-{
+CustomWifiManager::CustomWifiManager() {
+	this->setDebugOutput(false);
 }
 
 void CustomWifiManager::setup(const char* ap_ssid, const char* ap_password) {
-	this->addParameter(&parameters.mqtt_host);
-	this->addParameter(&parameters.mqtt_user);
-	this->addParameter(&parameters.mqtt_password);
 	WiFiManager::setEnableConfigPortal(false);
 	this->setConfigPortalBlocking(false);
 
-	#ifdef LOG_INFO
+	#ifdef INFO_LOG
 		int start = millis();
 	#endif
 	bool is_connected = this->autoConnect(ap_ssid, ap_password);
-	#ifdef LOG_INFO
+	#ifdef INFO_LOG
 		if (is_connected) {
-				LOG("Connected")
+				LOG("Connected as %s", WiFi.localIP().toString().c_str())
 				LOG("Time: %dms", (int)(millis() - start))
 		}
 	#endif

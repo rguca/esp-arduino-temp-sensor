@@ -4,17 +4,17 @@
 CustomMqttClient::CustomMqttClient() : MqttClient(wifi_client) {
 }
 
-void CustomMqttClient::setup(String device_name, String host, String user, String password) {
+void CustomMqttClient::setup(const char* device_name, MqttSettings* settings) {
     this->device.ids = strdup(String(ESP.getChipId(), HEX).c_str());
-    this->device.name = strdup(device_name.c_str());
+    this->device.name = device_name;
     this->device.mf = "espressif";
     
-    this->setUsernamePassword(user, password);
-    if (this->connect(host.c_str())) {
-        LOG("Connected to %s", host.c_str())
+    this->setUsernamePassword(settings->user, settings->password);
+    if (this->connect(settings->host)) {
+        LOG("Connected to %s", settings->host)
         this->onConnectCallback();
     } else {
-        LOGE("Connection to %s failed! Error code = %d", host.c_str(), this->connectError())
+        LOGE("Connection to %s failed! Error code = %d", settings->host, this->connectError())
     }
 }
 

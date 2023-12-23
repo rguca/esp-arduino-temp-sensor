@@ -1,26 +1,47 @@
+#define TAG "Prefs"
 #include "CustomPreferences.h"
 
 CustomPreferences::CustomPreferences() {
 	this->is_rtc_clean = !rtc_memory.begin();
 }
 
-MqttSettings CustomPreferences::getMqttSettings() {
-	this->begin("mqtt");
-	MqttSettings preferences {
-		this->getString("host"),
-		this->getString("user"),
-		this->getString("password")
-	};
-	this->end();
-	return preferences;
+Parameters* CustomPreferences::getParameters() {
+	if (this->parameters == NULL) {
+		this->loadParameters();
+	}
+	return this->parameters;
 }
 
-void CustomPreferences::setMqttSettings(MqttSettings settings) {
+void CustomPreferences::loadParameters() {
 	this->begin("mqtt");
-	this->putString("host", settings.host);
-	this->putString("user", settings.user);
-	this->putString("password", settings.password);
+	this->parameters = new Parameters {
+		{"mqtt_host", "MQTT host", this->getString("host").c_str(), 20},
+		{"mqtt_user", "MQTT user", this->getString("user").c_str(), 20},
+		{"mqtt_password", "MQTT password", this->getString("password").c_str(), 20}
+	};
 	this->end();
+	LOG("Loaded")
+}
+
+void CustomPreferences::saveParameters() {
+	this->begin("mqtt");
+	this->putString("host", this->parameters->mqtt_host.getValue());
+	this->putString("user", this->parameters->mqtt_user.getValue());
+	this->putString("password", this->parameters->mqtt_password.getValue());
+	this->end();
+	LOG("Saved");
+}
+
+MqttSettings CustomPreferences::getMqttSettings() {
+	if (this->parameters == NULL) {
+		this->loadParameters();
+	}
+	MqttSettings preferences {
+		this->parameters->mqtt_host.getValue(),
+		this->parameters->mqtt_user.getValue(),
+		this->parameters->mqtt_password.getValue(),
+	};
+	return preferences;
 }
 
 bool CustomPreferences::isRtcClean() {
@@ -40,6 +61,8 @@ bool CustomPreferences::isStateChanged(std::initializer_list<float> values) {
 		rtc_settings->state_crc = new_crc;
 		this->rtc_memory.save();
 		return true;
+	} else {
+		LOG("State unchanged")
 	}
 	
 	return false;
