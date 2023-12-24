@@ -53,3 +53,38 @@ Entering deep sleep for 60s
 424:[MQTT] Published Laufzeit: 0.423000
 477: Entering deep sleep for 900s
 # - 60ms
+
+# Store settings to RTC to avoid flash read
+87: Config: 0
+177:[Prefs] State changed 52556 <> 50508
+358:[WiFi] Connected as 192.168.1.148
+359:[WiFi] Time: 182ms
+377:[MQTT] Connected to 192.168.1.5
+379:[MQTT] Published T1: 24.000000
+380:[MQTT] Published T2: 27.000000
+381:[MQTT] Published Batterie: 4.853008
+382:[MQTT] Published Laufzeit: 0.381000
+435: Entering deep sleep for 900s
+# - 40ms
+
+69: Start
+79:[OneWire] Requested temperature on pin: 0
+88:[OneWire] Requested temperature on pin: 4
+93:[Settings] Filesystem initialized
+93:[Settings] Loaded
+93: Config: 0
+180:[Settings] State changed 16358 <> 47129
+181:[Settings] Saved
+362:[WiFi] Connected as 192.168.1.148
+363:[WiFi] Time: 182ms
+382:[MQTT] Connected to 192.168.1.5
+384:[MQTT] Published T1: 25.500000
+385:[MQTT] Published T2: 26.500000
+386:[MQTT] Published Batterie: 4.853008
+387:[MQTT] Published Laufzeit: 0.386000
+440:[Settings] Saved
+440: Entering deep sleep for 900s
+
+ 70ms start
+120ms sensor
+200ms wifi

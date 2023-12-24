@@ -3,7 +3,7 @@
 OneWireTemperatureSensor temperature_sensor(D3, 9);
 OneWireTemperatureSensor temperature_sensor2(D2, 9);
 
-CustomPreferences preferences;
+Settings settings;
 
 CustomWifiManager wifi_manager;
 CustomMqttClient mqtt_client;
@@ -14,18 +14,20 @@ float battery_voltage;
 void setup() {
 	#ifdef ENABLE_LOG
 		Serial.begin(74880);
+		LOG("Start")
 	#endif
 
 	temperature_sensor.requestTemperature();
 	temperature_sensor2.requestTemperature();
-	// OneWireTemperatureSensor::requestAllTemperatures();
+
+	settings.load();
 
 	pinMode(D0, INPUT_PULLDOWN_16); 
 	is_config_enabled = digitalRead(D0) == 0;
 	pinMode(D0, INPUT);
 	LOG("Config: %d", is_config_enabled);
 
-	if (!preferences.isStateChanged({temperature_sensor.getValue(), temperature_sensor2.getValue()}) && !is_config_enabled) {
+	if (!settings.isStateChanged({temperature_sensor.getValue(), temperature_sensor2.getValue()}) && !is_config_enabled) {
 		deepSleep();
 		return;
 	}
@@ -33,22 +35,25 @@ void setup() {
 	battery_voltage = analogRead(A0) / 1024.0 * 5.66; // Needs to be measured early to not drop it too much
 
 	if (is_config_enabled) {
-		Parameters* parameters = preferences.getParameters();
+		Parameters* parameters = settings.getParameters();
 		wifi_manager.addParameter(&parameters->mqtt_host);
 		wifi_manager.addParameter(&parameters->mqtt_user);
 		wifi_manager.addParameter(&parameters->mqtt_password);
-		wifi_manager.setOnSave([](void) {preferences.saveParameters();});
+		wifi_manager.setOnSave([](void) {
+			settings.persist();
+			ESP.restart();
+		});
 		wifi_manager.setEnableConfigPortal(is_config_enabled);
 	}
-	wifi_manager.setup("Temp Sensor", "keller123");
+	wifi_manager.setup(DEVICE_NAME, DEVICE_PASSWORD);
 
-	MqttSettings settings = preferences.getMqttSettings();
+	MqttSettings mqtt_settings = settings.getMqttSettings();
 	mqtt_client.setOnConnect(sendState);
-	mqtt_client.setup("Temp Sensor", &settings);
+	mqtt_client.setup(DEVICE_NAME, &mqtt_settings);
 }
 
 void sendState() {
-	if (preferences.isRtcClean()) {
+	if (!settings.isRebooted()) {
 		mqtt_client.registerTemperature("T1");
 		mqtt_client.registerTemperature("T2");
 		mqtt_client.registerVoltage("Batterie");
@@ -73,8 +78,11 @@ void loop() {
 void deepSleep() {
 	mqtt_client.stop(); // Stop client so that outgoing messages are send
 
+	settings.setRebooted();
+	settings.save();
+
 	if (is_config_enabled) return;
-	int time = 60;
+	int time = 3 * 60;
 	if (temperature_sensor.getLastValue() < 40)
 		time = 15 * 60;
 	LOG("Entering deep sleep for %ds", time)

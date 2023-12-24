@@ -86,6 +86,7 @@ bool OneWireTemperatureSensor::requestTemperature() {
     if (!this->resetAndSelectDevice()) return false;
     this->one_wire->write(0x44); // Start conversion
     this->is_conversion_in_progress = true;
+    LOG("Requested temperature on pin: %d", this->pin)
     return true;
 }
 
@@ -123,7 +124,7 @@ bool OneWireTemperatureSensor::waitForResult() {
     int start = millis();
     while (this->one_wire->read() == 0) {
         if (millis() - start >= MAX_WAIT_TIME) return false;
-        delay(10);
+        delay(3);
     }
     this->is_conversion_in_progress = false;
     return true;
