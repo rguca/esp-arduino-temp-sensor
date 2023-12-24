@@ -20,10 +20,11 @@ protected:
     uint8_t pin;
     uint8_t resolution;
     OneWire* one_wire;
-    uint8_t address[8];
+    uint8_t* address;
     bool is_conversion_in_progress{false};
     float last_value;
 
+    bool resetAndSelectDevice();
     bool waitForResult();
     uint8_t* readScratchpad();
     bool writeScratchpad(uint8_t th, uint8_t tl, uint8_t cfg);

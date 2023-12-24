@@ -10,37 +10,38 @@ OneWireTemperatureSensor::OneWireTemperatureSensor(uint8_t pin, uint8_t resoluti
 
 void OneWireTemperatureSensor::setup() {
     this->one_wire = new OneWire(pin);
+    // this->address = new uint8_t[8];
 
-    if (!this->one_wire->search(this->address)) {
-        this->one_wire->reset_search();
-        LOGE("No temperature sensor found on pin: %d", pin)
-        return;
-    }
-    LOG("Temperature sensor found: 0x%02X%02X%02X%02X%02X%02X%02X%02X", (int) this->address[0], (int) this->address[1], (int) this->address[2], 
-        (int) this->address[3], (int) this->address[4], (int) this->address[5], (int) this->address[6], (int) this->address[7])
-    if (OneWire::crc8(this->address, 7) != this->address[7]) {
-        LOGE("Address CRC invalid")
-        return;
-    }
+    // if (!this->one_wire->search(this->address)) {
+    //     this->one_wire->reset_search();
+    //     LOGE("No temperature sensor found on pin: %d", pin)
+    //     return;
+    // }
+    // LOG("Temperature sensor found: 0x%02X%02X%02X%02X%02X%02X%02X%02X", (int) this->address[0], (int) this->address[1], (int) this->address[2], 
+    //     (int) this->address[3], (int) this->address[4], (int) this->address[5], (int) this->address[6], (int) this->address[7])
+    // if (OneWire::crc8(this->address, 7) != this->address[7]) {
+    //     LOGE("Address CRC invalid")
+    //     return;
+    // }
 
-    #ifdef INFO_LOG
-        const char* type;
-        switch (this->address[0]) {
-        case 0x10:
-        type = "DS18S20";
-        break;
-        case 0x28:
-        type = "DS18B20";
-        break;
-        case 0x22:
-        type = "DS1822";
-        break;
-        default:
-        type = "unknown";
-        return;
-        }
-        LOG("Type: %s", type)
-    #endif
+    // #ifdef INFO_LOG
+    //     const char* type;
+    //     switch (this->address[0]) {
+    //     case 0x10:
+    //     type = "DS18S20";
+    //     break;
+    //     case 0x28:
+    //     type = "DS18B20";
+    //     break;
+    //     case 0x22:
+    //     type = "DS1822";
+    //     break;
+    //     default:
+    //     type = "unknown";
+    //     return;
+    //     }
+    //     LOG("Type: %s", type)
+    // #endif
 
     if (this->resolution) {
         this->setResolution(this->resolution);
@@ -54,7 +55,7 @@ bool OneWireTemperatureSensor::setResolution(uint8_t resolution) {
     if (this->one_wire == NULL) {
         this->setup();
     }
-    if (this->address[0] == 0x10) { // Type DS18S20 has no resolution register
+    if (this->address != NULL && this->address[0] == 0x10) { // Type DS18S20 has no resolution register
         return true;
     }
 
@@ -81,26 +82,10 @@ bool OneWireTemperatureSensor::requestTemperature() {
     if (this->one_wire == NULL) {
         this->setup();
     }
-    if (this->is_conversion_in_progress) {
-        return true;
-    }
-    if (!this->one_wire->reset()) {
-        LOGE("No presence pulse detected. Can't request temperature")
-        return false;
-    }
-    this->one_wire->select(this->address);
+    if (this->is_conversion_in_progress) return true;
+    if (!this->resetAndSelectDevice()) return false;
     this->one_wire->write(0x44); // Start conversion
     this->is_conversion_in_progress = true;
-    return true;
-}
-
-bool OneWireTemperatureSensor::waitForResult() {
-    int start = millis();
-    while (this->one_wire->read() == 0) {
-        if (millis() - start >= MAX_WAIT_TIME) return false;
-        delay(10);
-    }
-    this->is_conversion_in_progress = false;
     return true;
 }
 
@@ -112,7 +97,7 @@ float OneWireTemperatureSensor::getValue() {
     if (data == NULL) return NAN;
 
     int16_t raw = (data[1] << 8) | data[0];
-    if (this->address[0] == 0x10) { // Type DS18S20
+    if (this->address != NULL && this->address[0] == 0x10) { // Type DS18S20
         raw = raw << 3; // 9 bit resolution default
         if (data[7] == 0x10) {
             // "count remain" gives full 12 bit resolution
@@ -134,12 +119,18 @@ float OneWireTemperatureSensor::getLastValue() {
     return this->last_value;
 }
 
-uint8_t* OneWireTemperatureSensor::readScratchpad() {
-    if (!this->one_wire->reset()) {
-        LOGE("No presence pulse detected. Can't read Scratchpad")
-        return NULL;
+bool OneWireTemperatureSensor::waitForResult() {
+    int start = millis();
+    while (this->one_wire->read() == 0) {
+        if (millis() - start >= MAX_WAIT_TIME) return false;
+        delay(10);
     }
-    this->one_wire->select(this->address);
+    this->is_conversion_in_progress = false;
+    return true;
+}
+
+uint8_t* OneWireTemperatureSensor::readScratchpad() {
+    if (!this->resetAndSelectDevice()) return NULL;
     this->one_wire->write(0xBE); // Read Scratchpad
 
     uint8_t* data = new uint8_t[9];
@@ -155,11 +146,7 @@ uint8_t* OneWireTemperatureSensor::readScratchpad() {
 }
 
 bool OneWireTemperatureSensor::writeScratchpad(uint8_t th, uint8_t tl, uint8_t cfg) {
-    if (!this->one_wire->reset()) {
-        LOGE("No presence pulse detected. Can't write Scratchpad")
-        return false;
-    }
-    this->one_wire->select(this->address);
+    if (!this->resetAndSelectDevice()) return false;
     this->one_wire->write(0x4E); // Write Scratchpad
     this->one_wire->write(th);
     this->one_wire->write(tl);
@@ -167,6 +154,20 @@ bool OneWireTemperatureSensor::writeScratchpad(uint8_t th, uint8_t tl, uint8_t c
     return true;
 }
 
+bool OneWireTemperatureSensor::resetAndSelectDevice() {
+    if (!this->one_wire->reset()) {
+        LOGE("No presence pulse detected. Can't select device")
+        return false;
+    }
+    if (this->address == NULL) {
+        this->one_wire->skip();
+    } else {
+        this->one_wire->select(this->address);
+    }
+    return true;
+}
+
 OneWireTemperatureSensor::~OneWireTemperatureSensor() {
     delete this->one_wire;
+    delete this->address;
 }

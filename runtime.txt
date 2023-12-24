@@ -1,0 +1,55 @@
+OneWire temperature sensor found: 0x28C511D244230BC6
+Type: DS18B20
+OneWire temperature sensor found: 0x284FD0D044230B0B
+Type: DS18B20
+Config: 0
+State changed 61465 <> 56106
+*wm:AutoConnect 
+*wm:Connecting to SAVED AP: WLAN
+*wm:connectTimeout not set, ESP waitForConnectResult... 
+*wm:AutoConnect: SUCCESS 
+*wm:STA IP Address: 192.168.1.148
+WiFi connected
+Time: 183ms
+MQTT connected to 192.168.1.5
+Temperature T1 sent: 25.000000
+Temperature T2 sent: 23.500000
+Voltage Batterie sent: 4.841953
+Duration Laufzeit sent: 0.487000
+Entering deep sleep for 60s
+
+
+84:[OneWire] Temperature sensor found: 0x28C511D244230BC6
+85:[OneWire] Type: DS18B20
+118:[OneWire] Temperature sensor found: 0x284FD0D044230B0B
+119:[OneWire] Type: DS18B20
+137: Config: 0
+236:[Prefs] State changed 8576 <> 10624
+*wm:AutoConnect 
+*wm:Connecting to SAVED AP: WLAN
+*wm:connectTimeout not set, ESP waitForConnectResult... 
+*wm:AutoConnect: SUCCESS 
+*wm:STA IP Address: 192.168.1.148
+424:[WiFi] Connected as 192.168.1.148
+425:[WiFi] Time: 189ms
+462:[Prefs] Loaded
+482:[MQTT] Connected to 192.168.1.5
+483:[MQTT] Published T1: 24.500000
+485:[MQTT] Published T2: 23.000000
+485:[MQTT] Published Batterie: 4.841953
+486:[MQTT] Published Laufzeit: 0.485000
+537: Entering deep sleep for 900s
+
+# No OneWire address scan:
+87: Config: 0
+177:[Prefs] State changed 56654 <> 10212
+364:[WiFi] Connected as 192.168.1.148
+364:[WiFi] Time: 187ms
+402:[Prefs] Loaded
+420:[MQTT] Connected to 192.168.1.5
+421:[MQTT] Published T1: 34.500000
+422:[MQTT] Published T2: 23.500000
+423:[MQTT] Published Batterie: 4.847480
+424:[MQTT] Published Laufzeit: 0.423000
+477: Entering deep sleep for 900s
+# - 60ms
