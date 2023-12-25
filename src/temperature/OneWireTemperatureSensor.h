@@ -21,11 +21,11 @@ protected:
     uint8_t resolution;
     OneWire* one_wire;
     uint8_t* address;
+    uint8_t* scratch_pad;
     bool is_conversion_in_progress{false};
-    float last_value;
 
     bool resetAndSelectDevice();
     bool waitForResult();
-    uint8_t* readScratchpad();
+    bool readScratchpad();
     bool writeScratchpad(uint8_t th, uint8_t tl, uint8_t cfg);
 };
