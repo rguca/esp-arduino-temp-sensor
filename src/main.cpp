@@ -17,22 +17,12 @@ void setup() {
 		LOG("Start")
 	#endif
 
-	temperature_sensor.requestTemperature();
-	temperature_sensor2.requestTemperature();
-
-	settings.load();
+	wifi_manager.connect();
 
 	pinMode(D0, INPUT_PULLDOWN_16); 
 	is_config_enabled = digitalRead(D0) == 0;
 	pinMode(D0, INPUT);
 	LOG("Config: %d", is_config_enabled);
-
-	if (!settings.isStateChanged({temperature_sensor.getValue(), temperature_sensor2.getValue()}) && !is_config_enabled) {
-		deepSleep();
-		return;
-	}
-
-	battery_voltage = analogRead(A0) / 1024.0 * 5.66; // Needs to be measured early to not drop it too much
 
 	if (is_config_enabled) {
 		Parameters* parameters = settings.getParameters();
@@ -42,17 +32,34 @@ void setup() {
 		wifi_manager.setOnSave([](void) {
 			settings.persist();
 			ESP.restart();
-		});
-		wifi_manager.setEnableConfigPortal(is_config_enabled);
+		});	
+		wifi_manager.setupAP(DEVICE_NAME, DEVICE_PASSWORD);
 	}
-	wifi_manager.setup(DEVICE_NAME, DEVICE_PASSWORD);
 
-	MqttSettings mqtt_settings = settings.getMqttSettings();
-	mqtt_client.setOnConnect(sendState);
-	mqtt_client.setup(DEVICE_NAME, &mqtt_settings);
+	// Request conversions
+	temperature_sensor.requestTemperature();
+	temperature_sensor2.requestTemperature();
+
+	battery_voltage = analogRead(A0) / 1024.0 * 5.66; // Needs to be measured early to not drop it too much
+
+	settings.load();
+
+	// Read values
+	temperature_sensor.getValue();
+	temperature_sensor2.getValue();
+
+	if (wifi_manager.awaitConnect()) {
+		 sendState();
+	}
+
+	deepSleep();
 }
 
 void sendState() {
+	MqttSettings mqtt_settings = settings.getMqttSettings();
+	mqtt_client.setup(DEVICE_NAME, &mqtt_settings);
+	if (!mqtt_client.connected()) return;
+
 	if (!settings.isRebooted()) {
 		mqtt_client.registerTemperature("T1");
 		mqtt_client.registerTemperature("T2");
@@ -66,22 +73,18 @@ void sendState() {
 }
 
 void loop() {
-	wifi_manager.process();
-	mqtt_client.poll();
-
-	if (!wifi_manager.isConnected()) return;
-	if (!mqtt_client.connected()) return;
-
-	deepSleep();
+	if (is_config_enabled) wifi_manager.process();
+	if (mqtt_client.connected()) mqtt_client.poll();
 }
 
 void deepSleep() {
+	if (is_config_enabled) return;
+
 	mqtt_client.stop(); // Stop client so that outgoing messages are send
 
 	settings.setRebooted();
 	settings.save();
 
-	if (is_config_enabled) return;
 	int time = 3 * 60;
 	if (temperature_sensor.getLastValue() < 40)
 		time = 15 * 60;

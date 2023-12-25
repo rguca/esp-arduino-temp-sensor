@@ -7,6 +7,7 @@ Settings::Settings() :
 }
 
 void Settings::load() {
+	if (this->rtc_data != nullptr) return;
 	if (LittleFS.begin()) {
 		LOG("Filesystem initialized")
 	} else {
@@ -25,6 +26,7 @@ Parameters* Settings::getParameters() {
 }
 
 void Settings::loadParameters() {
+	this->load();
 	RtcData* data = this->rtc_data;
 	this->parameters = new Parameters {
 		{"mqtt_host", "MQTT host", data->mqtt_host, sizeof(data->mqtt_host) - 1},

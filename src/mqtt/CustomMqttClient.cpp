@@ -12,7 +12,6 @@ void CustomMqttClient::setup(const char* device_name, MqttSettings* settings) {
     this->setUsernamePassword(settings->user, settings->password);
     if (this->connect(settings->host)) {
         LOG("Connected to %s", settings->host)
-        this->onConnectCallback();
     } else {
         LOGE("Connection to %s failed! Error code = %d", settings->host, this->connectError())
     }
@@ -81,8 +80,4 @@ String CustomMqttClient::convertName(const char* name) {
     name_.toLowerCase();
     name_.replace(' ', '-');
     return name_;
-}
-
-void CustomMqttClient::setOnConnect(std::function<void()> callback) {
-    this->onConnectCallback = callback;
 }

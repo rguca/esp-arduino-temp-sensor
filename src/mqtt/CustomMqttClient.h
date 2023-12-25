@@ -14,7 +14,6 @@ class CustomMqttClient : public MqttClient {
 public:
     CustomMqttClient();
 
-    void setOnConnect(std::function<void()> callback);
     void setup(const char* device_name, MqttSettings* settings);
 
     void registerTemperature(const char* name);
@@ -33,7 +32,6 @@ protected:
     } device;
 
     WiFiClient wifi_client;
-    std::function<void()> onConnectCallback;
 
     void registerMeasurement(const char* name, JsonDocument* doc);
     String convertName(const char* name);

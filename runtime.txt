@@ -86,5 +86,79 @@ Entering deep sleep for 60s
 440: Entering deep sleep for 900s
 
  70ms start
-120ms sensor
-200ms wifi
+ 20ms sensor request
+ 90ms sensor read
+180ms wifi
+ 25ms mqtt
+
+
+# Don't compare state
+68: Start
+77:[OneWire] Requested temperature on pin: 0
+87:[OneWire] Requested temperature on pin: 4
+91:[Settings] Filesystem initialized
+92:[Settings] Loaded
+92: Config: 0
+276:[WiFi] Connected as 192.168.1.148
+277:[WiFi] Time: 185ms
+297:[MQTT] Connected to 192.168.1.5
+307:[MQTT] Published T1: 23.000000
+316:[MQTT] Published T2: 23.500000
+316:[MQTT] Published Batterie: 4.742461
+317:[MQTT] Published Laufzeit: 0.317000
+359:[Settings] Saved
+359: Entering deep sleep for 900s
+# - 70ms
+
+ 70ms start
+ 20ms sensor request
+185ms wifi
+ 20ms mqtt
+ 20ms sensor read
+
+
+# Sensor read optimization
+ 69: Start
+72:[OneWire] Requested temperature on pin: 0
+74:[OneWire] Requested temperature on pin: 4
+79:[Settings] Filesystem initialized
+79:[Settings] Loaded
+79: Config: 0
+264:[WiFi] Connected as 192.168.1.148
+265:[WiFi] Time: 185ms
+284:[MQTT] Connected to 192.168.1.5
+294:[MQTT] Published T1: nan
+302:[MQTT] Published T2: nan
+303:[MQTT] Published Batterie: 4.742461
+304:[MQTT] Published Laufzeit: 0.303000
+351:[Settings] Saved
+351: Entering deep sleep for 900s
+# - 10ms
+
+ 70ms start
+  5ms sensor request
+  5ms filesystem
+185ms wifi
+ 20ms mqtt
+ 20ms sensor read
+
+
+69: Start
+69:[WiFi] Connecting WiFi...
+71: Config: 0
+74:[OneWire] Requested temperature on pin: 0
+76:[OneWire] Requested temperature on pin: 4
+81:[Settings] Filesystem initialized
+82:[Settings] Loaded
+249:[WiFi] Connected as 192.168.1.148
+272:[MQTT] Connected to 192.168.1.5
+274:[MQTT] Published T1: 24.500000
+275:[MQTT] Published T2: 25.000000
+276:[MQTT] Published Batterie: 4.742461
+276:[MQTT] Published Laufzeit: 0.276000
+329:[Settings] Saved
+329: Entering deep sleep for 900s
+
+ 70ms start
+180ms wifi
+ 25ms mqtt
