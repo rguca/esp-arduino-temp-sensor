@@ -5,7 +5,7 @@
 class CustomWifiManager: public WiFiManager {
 public:
     CustomWifiManager();
-    void setupAP(const char* ap_ssid, const char* ap_password);
+    void setup(const char* ap_ssid, const char* ap_password);
     void setEnableConfigPortal(bool enable);
     void setOnSave(std::function<void()> callback);
     void connect();

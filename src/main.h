@@ -1,5 +1,5 @@
-const char* DEVICE_NAME = "Temp Sensor";
-const char* DEVICE_PASSWORD = "keller123";
+const char* DEVICE_NAME = "Temperatur Sensor";
+const char* DEVICE_PASSWORD = "temp12345";
 
 #include "log/log.h"
 #include "temperature/OneWireTemperatureSensor.h"

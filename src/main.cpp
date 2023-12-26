@@ -1,7 +1,7 @@
 #include "main.h"
 
-OneWireTemperatureSensor temperature_sensor(D3, 9);
-OneWireTemperatureSensor temperature_sensor2(D2, 9);
+OneWireTemperatureSensor temperature_sensor(D2, 9);
+OneWireTemperatureSensor temperature_sensor2(D1, 9);
 
 Settings settings;
 
@@ -33,7 +33,7 @@ void setup() {
 			settings.persist();
 			ESP.restart();
 		});	
-		wifi_manager.setupAP(DEVICE_NAME, DEVICE_PASSWORD);
+		wifi_manager.setup(DEVICE_NAME, DEVICE_PASSWORD);
 	}
 
 	// Request conversions
@@ -87,7 +87,7 @@ void deepSleep() {
 
 	int time = 3 * 60;
 	if (temperature_sensor.getLastValue() < 40)
-		time = 15 * 60;
+		time = 30 * 60;
 	LOG("Entering deep sleep for %ds", time)
 	ESP.deepSleep(time * 1000000);
 }

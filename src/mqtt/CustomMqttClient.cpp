@@ -8,6 +8,7 @@ void CustomMqttClient::setup(const char* device_name, MqttSettings* settings) {
     this->device.ids = strdup(String(ESP.getChipId(), HEX).c_str());
     this->device.name = device_name;
     this->device.mf = "espressif";
+    this->setTxPayloadSize(512);
     
     this->setUsernamePassword(settings->user, settings->password);
     if (this->connect(settings->host)) {

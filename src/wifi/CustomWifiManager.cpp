@@ -5,7 +5,7 @@ CustomWifiManager::CustomWifiManager() {
 	this->setDebugOutput(false);
 }
 
-void CustomWifiManager::setupAP(const char* ap_ssid, const char* ap_password) {
+void CustomWifiManager::setup(const char* ap_ssid, const char* ap_password) {
 	bool is_connected = this->autoConnect(ap_ssid, ap_password);
 	if (is_connected) {
 		this->startWebPortal();
