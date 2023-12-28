@@ -1,7 +1,6 @@
 #include "main.h"
 
 OneWireTemperatureSensor temperature_sensor(D2, 9);
-OneWireTemperatureSensor temperature_sensor2(D1, 9);
 
 Settings settings;
 
@@ -38,7 +37,6 @@ void setup() {
 
 	// Request conversions
 	temperature_sensor.requestTemperature();
-	temperature_sensor2.requestTemperature();
 
 	battery_voltage = analogRead(A0) / 1024.0 * 5.66; // Needs to be measured early to not drop it too much
 
@@ -46,7 +44,6 @@ void setup() {
 
 	// Read values
 	temperature_sensor.getValue();
-	temperature_sensor2.getValue();
 
 	if (wifi_manager.awaitConnect()) {
 		 sendState();
@@ -62,12 +59,10 @@ void sendState() {
 
 	if (!settings.isRebooted()) {
 		mqtt_client.registerTemperature("T1");
-		mqtt_client.registerTemperature("T2");
 		mqtt_client.registerVoltage("Batterie");
 		mqtt_client.registerDuration("Laufzeit");
 	}
 	mqtt_client.sendValue("T1", temperature_sensor.getLastValue());
-	mqtt_client.sendValue("T2", temperature_sensor2.getLastValue());
 	mqtt_client.sendValue("Batterie", battery_voltage);
 	mqtt_client.sendValue("Laufzeit", millis() / 1000.0);
 }
